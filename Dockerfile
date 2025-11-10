@@ -1,7 +1,10 @@
-# Use Node.js 22.12 or later
-FROM node:22.12-alpine AS builder
+# Use Node.js 22.12 or later - explicitly specify version
+FROM node:22.12.0-alpine AS builder
 
 WORKDIR /app
+
+# Verify Node.js version
+RUN node --version
 
 # Copy package files
 COPY package*.json ./
@@ -16,9 +19,12 @@ COPY . .
 RUN npm run build:prod
 
 # Production stage - only proxy server
-FROM node:22.12-alpine
+FROM node:22.12.0-alpine
 
 WORKDIR /app
+
+# Verify Node.js version
+RUN node --version
 
 # Copy package files
 COPY package*.json ./
