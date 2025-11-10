@@ -1,0 +1,12 @@
+{
+  "/proxy-api": {
+    "target": "https://www.microburbs.com.au",
+    "secure": true,
+    "changeOrigin": true,
+    "logLevel": "debug",
+    "pathRewrite": {
+      "^/proxy-api": "/report_generator"
+    }
+  }
+}
+

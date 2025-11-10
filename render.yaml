@@ -1,0 +1,25 @@
+services:
+  # Proxy Server (Node.js)
+  - type: web
+    name: microburbs-proxy
+    env: node
+    buildCommand: npm install
+    startCommand: node proxy-server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+    # Allow connections from Angular frontend
+    allowDeploy: true
+
+  # Angular Frontend (Static)
+  - type: web
+    name: microburbs-frontend
+    env: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist/microburbs-sandbox
+    envVars:
+      - key: NODE_ENV
+        value: production
+
