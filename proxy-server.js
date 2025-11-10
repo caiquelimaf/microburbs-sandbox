@@ -1,6 +1,7 @@
 const express = require('express');
 const https = require('https');
 const zlib = require('zlib');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -21,6 +22,10 @@ function setCorsHeaders(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
 }
+
+// Serve static files from Angular build
+const distPath = path.join(__dirname, 'dist', 'microburbs-sandbox');
+app.use(express.static(distPath));
 
 // Handle OPTIONS requests (CORS preflight)
 app.options('/api/*', (req, res) => {
@@ -152,8 +157,18 @@ app.use('/api', async (req, res) => {
   }
 });
 
+// Fallback to index.html for Angular routes (SPA)
+app.get('*', (req, res) => {
+  // Don't serve index.html for API routes
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({ error: 'API route not found' });
+  }
+  res.sendFile(path.join(distPath, 'index.html'));
+});
+
 app.listen(PORT, () => {
   console.log(`Proxy server running on http://localhost:${PORT}`);
   console.log(`Proxying /api/* to https://www.microburbs.com.au/report_generator/api/*`);
+  console.log(`Serving Angular app from ${distPath}`);
 });
 
