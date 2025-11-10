@@ -2,6 +2,7 @@ const express = require('express');
 const https = require('https');
 const zlib = require('zlib');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -24,8 +25,47 @@ function setCorsHeaders(req, res) {
 }
 
 // Serve static files from Angular build
-const distPath = path.join(__dirname, 'dist', 'microburbs-sandbox');
-app.use(express.static(distPath));
+// Angular generates files in dist/microburbs-sandbox/browser/
+const possiblePaths = [
+  path.join(__dirname, 'dist', 'microburbs-sandbox', 'browser'),
+  path.join(__dirname, 'dist', 'microburbs-sandbox'),
+  path.join(__dirname, 'dist'),
+  path.join(process.cwd(), 'dist', 'microburbs-sandbox', 'browser'),
+  path.join(process.cwd(), 'dist', 'microburbs-sandbox'),
+  path.join(process.cwd(), 'dist')
+];
+
+let distPath = null;
+for (const testPath of possiblePaths) {
+  if (fs.existsSync(testPath)) {
+    const indexPath = path.join(testPath, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      distPath = testPath;
+      console.log('✓ Found dist directory at:', distPath);
+      break;
+    }
+  }
+}
+
+if (!distPath) {
+  console.error('✗ Dist directory not found. Tried:', possiblePaths);
+  // List what's actually in __dirname
+  if (fs.existsSync(__dirname)) {
+    console.log('Files in __dirname:', fs.readdirSync(__dirname));
+  }
+  if (fs.existsSync(process.cwd())) {
+    console.log('Files in process.cwd():', fs.readdirSync(process.cwd()));
+  }
+  // Fallback to default path
+  distPath = path.join(__dirname, 'dist', 'microburbs-sandbox', 'browser');
+  console.log('Using fallback path:', distPath);
+}
+
+if (distPath) {
+  app.use(express.static(distPath));
+} else {
+  console.error('Cannot serve static files: distPath is null');
+}
 
 // Handle OPTIONS requests (CORS preflight)
 app.options('/api/*', (req, res) => {
@@ -163,7 +203,16 @@ app.get('*', (req, res) => {
   if (req.path.startsWith('/api')) {
     return res.status(404).json({ error: 'API route not found' });
   }
-  res.sendFile(path.join(distPath, 'index.html'));
+  
+  const indexPath = path.join(distPath, 'index.html');
+  console.log('Serving index.html from:', indexPath);
+  
+  if (!fs.existsSync(indexPath)) {
+    console.error('index.html not found at:', indexPath);
+    return res.status(404).send('index.html not found');
+  }
+  
+  res.sendFile(indexPath);
 });
 
 app.listen(PORT, () => {
