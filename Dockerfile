@@ -29,7 +29,7 @@ RUN node --version
 # Copy package files
 COPY package*.json ./
 
-# Install only production dependencies
+# Install production dependencies (express, cors are now in dependencies)
 RUN npm ci --omit=dev
 
 # Copy proxy server
@@ -38,7 +38,7 @@ COPY proxy-server.js ./
 # Copy built Angular app (optional, if you want to serve it from proxy)
 COPY --from=builder /app/dist ./dist
 
-# Expose port
+# Expose port (Railway will set PORT env var)
 EXPOSE 3000
 
 # Start proxy server
